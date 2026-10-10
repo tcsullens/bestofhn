@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Best of HN</title>
+    <meta
+      name="description"
+      content="The most popular Hacker News posts of the last day, week, month and year, ranked by points or comments and tagged by topic."
+    />
+    <link rel="canonical" href="https://bestofhn.dev/" />
+    <meta property="og:title" content="Best of HN" />
+    <meta
+      property="og:description"
+      content="The most popular Hacker News posts of the last day, week, month and year, ranked by points or comments and tagged by topic."
+    />
+    <meta property="og:url" content="https://bestofhn.dev/" />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+    <script>
+      // Apply a stored light/dark choice before first paint; with none stored, CSS follows the system setting.
+      try {
+        const t = localStorage.getItem("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1>
+        <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M3 3h8.6l9.4 9.4-8.6 8.6L3 11.6V3z" fill="currentColor" />
+          <circle cx="7.5" cy="7.5" r="1.8" fill="var(--bg)" /></svg
+        >Best of HN
+      </h1>
+      <p class="muted"><span id="status">Loading…</span> · <a href="/about">About</a></p>
+      <div id="theme" class="seg theme" aria-label="Theme">
+        <button value="system">System</button><button value="light">Light</button><button value="dark">Dark</button>
+      </div>
+    </header>
+    <nav>
+      <div class="seg" data-key="w" aria-label="Time window">
+        <button value="24h">24h</button><button value="1w">Week</button><button value="1m">Month</button
+        ><button value="1y">Year</button>
+      </div>
+      <div class="seg" data-key="s" aria-label="Sort">
+        <button value="points">Points</button><button value="comments">Comments</button>
+      </div>
+      <div class="seg" data-key="t" aria-label="Type">
+        <button value="all">All</button><button value="story">Stories</button><button value="ask">Ask HN</button
+        ><button value="show">Show HN</button><button value="poll">Polls</button>
+      </div>
+      <button id="compare" class="toggle" hidden>Compare tags</button>
+    </nav>
+    <p id="filter" hidden></p>
+    <p id="coverage" class="muted" hidden></p>
+    <ol id="posts"></ol>
+    <button id="more" hidden>Show more</button>
+    <footer class="muted">
+      <a href="/about">About this site</a> · Not affiliated with Y Combinator or Hacker News. Posts from the
+      <a href="https://hn.algolia.com/api">HN Algolia API</a>.
+    </footer>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "bestofhn",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-20",
+  // index.html / app.js / style.css. Requests that don't match a file fall through to the Worker (e.g. /data.json).
+  "assets": { "directory": "./public" },
+  // Served at bestofhn.dev; the domain must be in this Cloudflare account (deploy creates the DNS record and certificate).
+  "routes": [{ "pattern": "bestofhn.dev", "custom_domain": true }],
+  // Only reachable at bestofhn.dev (this is also Wrangler's default when routes are set).
+  "workers_dev": false,
+  // Hourly (an interval >= 1h gets the 15 min CPU budget on Workers Paid).
+  "triggers": { "crons": ["7 * * * *"] },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "bestofhn", "database_id": "8b2db347-13dd-4713-95ab-0c5769321958" }
+  ],
+  "r2_buckets": [{ "binding": "DATA", "bucket_name": "bestofhn-data" }],
+  // Workers AI always runs on Cloudflare, even under `wrangler dev`, so LLM tagging needs `wrangler login`.
+  "ai": { "binding": "AI", "remote": true },
+  "vars": {
+    // How far back the database reaches (fills the 1y window). Hourly runs extend it in 10-day chunks; for a fresh
+    // deployment, seed it in one go with scripts/backfill.sh instead (see README).
+    "BACKFILL_DAYS": "365",
+    // Comma-separated Workers AI models. The first model's tags are shown; listing several (a trial) also exports every
+    // model's tags for the page's compare view (#compare=1). Set to "" to stop tagging.
+    "LLM_MODELS": "@cf/google/gemma-4-26b-a4b-it",
+    "LLM_THREADS_PER_RUN": "25"
+  },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    },
+    "traces": {
+      "enabled": false
+    },
+    "issues": {
+      "enabled": true
+    }
+  }
+}

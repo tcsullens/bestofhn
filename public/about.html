@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>About · Best of HN</title>
+    <meta name="description" content="What Best of HN is, what it lists, and how its topic tags are made." />
+    <link rel="canonical" href="https://bestofhn.dev/about" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+    <script>
+      // Apply a stored light/dark choice before first paint; with none stored, CSS follows the system setting.
+      try {
+        const t = localStorage.getItem("theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <header>
+      <h1>
+        <a href="/" class="home"
+          ><svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 3h8.6l9.4 9.4-8.6 8.6L3 11.6V3z" fill="currentColor" />
+            <circle cx="7.5" cy="7.5" r="1.8" fill="var(--bg)" /></svg
+          >Best of HN</a
+        >
+      </h1>
+    </header>
+    <main class="prose">
+      <h2>About</h2>
+      <p>
+        Best of HN lists the most popular Hacker News posts of the last 24 hours, week, month or year, ranked by points
+        or by number of comments, with some extra tags generated from the post title and comments.
+      </p>
+      <p>Job posts aren't included; content is updated hourly.</p>
+      <p>
+        This site isn't affiliated with Y Combinator or Hacker News. It's an alternative view of HN content based on my
+        personal preferences and links back to HN where applicable.
+        <a href="https://hn.algolia.com/">https://hn.algolia.com/</a> is also a worthwhile alternative.
+      </p>
+      <h3>Data</h3>
+      <p>
+        Posts and comments come from the <a href="https://hn.algolia.com/api">HN Search API</a> by Algolia. Every post
+        links to its discussion on Hacker News.
+      </p>
+
+      <p><a href="/">← Back to the rankings</a></p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "bestofhn",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "db:migrate:local": "wrangler d1 migrations apply bestofhn --local",
+    "db:migrate:remote": "wrangler d1 migrations apply bestofhn --remote",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "run-job:local": "curl -s 'http://localhost:8787/cdn-cgi/local/scheduled?format=json'",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "stemmer": "2.0.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20260924.1",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "wrangler": "4.139.0"
+  }
+}
