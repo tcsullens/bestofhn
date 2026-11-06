@@ -15,6 +15,7 @@ const DAY = 86400;
 const RESYNC_DAYS = 5; // points and comment counts keep moving for a few days after posting (measured: little change after day 5)
 const BACKFILL_CHUNK_DAYS = 10; // older history fetched per run until BACKFILL_DAYS is covered
 const LIST_SIZE = 300; // posts per (window, sort, type) list
+const SORT_INDEX_DAYS = 30; // windows at least this long read their lists off the (type, sort) indexes
 const MIN_COMMENTS = 5; // smaller threads are tagged from the title alone, then re-tagged from comments once they reach this
 const TITLE_TAGS_PER_RUN = 100; // title-only tagging is cheap (~3 neurons, no Algolia fetch)
 const CONCURRENCY = 6; // Workers' limit on simultaneous outbound connections
@@ -87,26 +88,35 @@ async function upsertPosts(db: D1Database, posts: Post[]): Promise<number> {
   return posts.length;
 }
 
-/** Top LIST_SIZE post ids per window and sort, overall and per type, in one query per (window, sort). */
+/**
+ * Top LIST_SIZE post ids per window and sort, per type with one LIMIT query each, and overall by merging those.
+ * Long windows walk the (type, sort) index and stop after ~LIST_SIZE rows; short ones sort the window's few rows. The
+ * planner picks the sort index for every window (walking most of the table for 24h), hence INDEXED BY.
+ */
 async function buildLists(db: D1Database, now: number): Promise<Lists> {
+  const types: PostType[] = ["story", "ask", "show", "poll"];
   const lists = {} as Lists;
   for (const [w, days] of Object.entries(WINDOWS) as [WindowKey, number][]) {
     lists[w] = {} as Lists[WindowKey];
     for (const [s, column] of Object.entries(SORTS) as [SortKey, string][]) {
-      const { results } = await db
-        .prepare(
-          `SELECT id, type, ra, rt FROM (
-             SELECT id, type,
-               ROW_NUMBER() OVER (ORDER BY ${column} DESC, id DESC) AS ra,
-               ROW_NUMBER() OVER (PARTITION BY type ORDER BY ${column} DESC, id DESC) AS rt
-             FROM posts WHERE created_at >= ?1)
-           WHERE ra <= ?2 OR rt <= ?2`,
-        )
-        .bind(now - days * DAY, LIST_SIZE)
-        .all<{ id: number; type: PostType; ra: number; rt: number }>();
+      const index = days >= SORT_INDEX_DAYS ? `posts_type_${column}` : "posts_created_at";
+      const perType = await db.batch<{ id: number; n: number }>(
+        types.map((type) =>
+          db
+            .prepare(
+              `SELECT id, ${column} AS n FROM posts INDEXED BY ${index}
+               WHERE type = ?1 AND created_at >= ?2 ORDER BY ${column} DESC, id DESC LIMIT ?3`,
+            )
+            .bind(type, now - days * DAY, LIST_SIZE),
+        ),
+      );
       const byType: Record<"all" | PostType, number[]> = { all: [], story: [], ask: [], show: [], poll: [] };
-      for (const r of [...results].sort((a, b) => a.ra - b.ra)) if (r.ra <= LIST_SIZE) byType.all.push(r.id);
-      for (const r of [...results].sort((a, b) => a.rt - b.rt)) if (r.rt <= LIST_SIZE) byType[r.type].push(r.id);
+      types.forEach((type, i) => (byType[type] = perType[i].results.map((r) => r.id)));
+      byType.all = perType
+        .flatMap((r) => r.results)
+        .sort((a, b) => b.n - a.n || b.id - a.id)
+        .slice(0, LIST_SIZE)
+        .map((r) => r.id);
       lists[w][s] = byType;
     }
   }
